@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import userRouter from './routes/userRouter';
 dotenv.config()
 const app = express();
 
@@ -17,9 +18,7 @@ mongoose.connect(process.env.MONGO_URL as string)
 app.use(express.json())
 app.use(cors())
 
-app.get('/', (req: Request, res: Response) => {
-    res.json({ message: 'Hello World' })
-})
+app.use('/api/user', userRouter)
 
 const PORT = 3000
 app.listen(PORT, () => {
