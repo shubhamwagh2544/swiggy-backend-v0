@@ -18,7 +18,12 @@ mongoose.connect(process.env.MONGO_URL as string)
 
 app.use(express.json())
 app.use(cors())
-app.use(jwtCheck)
+
+app.get('/health', (req: Request, res: Response) => {
+    res.status(200).json({
+        message: 'Health OK!'
+    })
+})
 
 app.use('/api/user', userRouter)
 
