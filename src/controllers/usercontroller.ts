@@ -7,7 +7,7 @@ async function createUser(req: Request, res: Response) {
         const existingUser = await User.findOne({
             auth0Id
         })
-        //TODO: code smell
+        //TODO: recheck
         if (existingUser) {
             return res.status(200).json({
                 user: existingUser
@@ -27,7 +27,35 @@ async function createUser(req: Request, res: Response) {
     }
 }
 
+async function updateUser(req: Request, res: Response) {
+    try {
+        const { name, addressLine, city, country } = req.body
+        const user = await User.findById(req.userId)
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found'
+            })
+        }
+        // name, addressLine, city, country are required fields in the frontend
+        user.name = name
+        user.addressLine = addressLine
+        user.city = city
+        user.country = country
+
+        await user.save()
+        return res.status(200).json({
+            user: user.toObject()
+        })
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: 'Error updating user'
+        })
+    }
+}
 
 export {
-    createUser
+    createUser,
+    updateUser
 }
