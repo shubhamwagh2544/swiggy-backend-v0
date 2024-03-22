@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { createRestaurant } from '../controllers/restaurantcontroller';
 import { jwtCheck, jwtParse } from '../middlewares/auth';
+import { validateRestaurantRequests } from '../middlewares/validation';
 const restaurantRouter = express.Router()
 
 const storage = multer.memoryStorage()
@@ -12,6 +13,6 @@ const upload = multer({
     }
 })
 
-restaurantRouter.post('/', jwtCheck, jwtParse, upload.single('image'), createRestaurant)
+restaurantRouter.post('/', upload.single('imageFile'), validateRestaurantRequests, jwtCheck, jwtParse, createRestaurant)
 
 export default restaurantRouter
