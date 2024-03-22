@@ -2,8 +2,9 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { v2 as cloudinary } from 'cloudinary'
 import userRouter from './routes/userRouter';
-import { jwtCheck } from './middlewares/auth';
+import restaurantRouter from './routes/restaurantRouter';
 dotenv.config()
 const app = express();
 
@@ -16,6 +17,12 @@ mongoose.connect(process.env.MONGO_URL as string)
         console.log('Error connecting to MongoDB:', err)
     })
 
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
 app.use(express.json())
 app.use(cors())
 
@@ -26,6 +33,7 @@ app.get('/health', (req: Request, res: Response) => {
 })
 
 app.use('/api/user', userRouter)
+app.use('/api/restaurant', restaurantRouter)
 
 const PORT = 3000
 app.listen(PORT, () => {
