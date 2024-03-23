@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary'
 import userRouter from './routes/userRouter';
 import restaurantRouter from './routes/restaurantRouter';
+import searchRouter from './routes/searchRouter';
 dotenv.config()
 const app = express();
 
@@ -34,6 +35,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 app.use('/api/user', userRouter)
 app.use('/api/restaurant', restaurantRouter)
+app.use('/api/search', searchRouter)
 
 const PORT = 3000
 app.listen(PORT, () => {
