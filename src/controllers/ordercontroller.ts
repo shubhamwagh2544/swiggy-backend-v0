@@ -8,6 +8,7 @@ dotenv.config()
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string)
 const FRONTEND_URL = process.env.FRONTEND_URL as string
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string
 
 type CheckoutSessionRequest = {
     cartItems: {
@@ -154,10 +155,38 @@ async function createSession(
 }
 
 async function stripeWebhookHandler(req: Request, res: Response) {
-    console.log('Strip Webhook Event Received')
-    console.log('============================')
-    console.log('Event: ', req.body)
-    res.status(200).json({ received: true })
+    let event;
+    try {
+        const signature = req.headers['stripe-signature']
+        event = STRIPE.webhooks.constructEvent(
+            req.body,
+            signature as string,
+            STRIPE_WEBHOOK_SECRET
+        )
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            message: 'Error processing Stripe webhook'
+        })
+    }
+
+    if (event.type === 'checkout.session.completed') {
+        const order = await Order.findById(event.data.object.metadata?.orderId)
+        
+        if (!order) {
+            return res.status(404).json({
+                message: 'Order not found'
+            })
+        }
+        
+        if (event.data.object.amount_total !== null) {
+            order.totalAmount = event.data.object.amount_total / 100
+        }
+        order.status = 'paid'
+        
+        await order.save()
+    }
 }
 
 export {
