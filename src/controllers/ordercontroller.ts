@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Restaurant, { MenuItemType } from '../models/restaurant';
+dotenv.config()
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string)
 const FRONTEND_URL = process.env.FRONTEND_URL as string
@@ -67,7 +69,7 @@ function createLineItems(checkoutSessionRequest: CheckoutSessionRequest, menuIte
         const line_item: Stripe.Checkout.SessionCreateParams.LineItem = {
             price_data: {
                 currency: 'usd',
-                unit_amount: menuItem.price,
+                unit_amount: menuItem.price * 100,
                 product_data: {
                     name: menuItem.name
                 }
@@ -95,7 +97,7 @@ async function createSession(
                     display_name: 'Delivery',
                     type: 'fixed_amount',
                     fixed_amount: {
-                        amount: deliveryPrice,
+                        amount: deliveryPrice * 100,
                         currency: 'usd'
                     }
                 }
