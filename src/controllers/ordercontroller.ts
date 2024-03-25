@@ -55,7 +55,6 @@ async function createCheckoutSession(req: Request, res: Response) {
             createdAt: new Date()
         })
 
-        // Fetch the price for each menu item and include it in the cartItems array
         for (const cartItem of checkoutSessionRequest.cartItems) {
             const menuItem = restaurant.menuItems.find(item => item._id.toString() === cartItem.menuItemId)
             if (!menuItem) {
@@ -65,7 +64,7 @@ async function createCheckoutSession(req: Request, res: Response) {
                 menuItemId: cartItem.menuItemId,
                 name: cartItem.name,
                 quantity: cartItem.quantity,
-                price: menuItem.price // Include the price here
+                price: menuItem.price
             })
         }
 
@@ -154,7 +153,14 @@ async function createSession(
     return sessionData
 }
 
+async function stripeWebhookHandler(req: Request, res: Response) {
+    console.log('Strip Webhook Event Received')
+    console.log('============================')
+    console.log('Event: ', req.body)
+    res.status(200).json({ received: true })
+}
 
 export {
-    createCheckoutSession
+    createCheckoutSession,
+    stripeWebhookHandler
 }
