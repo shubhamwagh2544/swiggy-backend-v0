@@ -10,7 +10,7 @@ searchRouter.get(
 )
 
 searchRouter.get(
-    '/:restaurantId',
+    '/detail/:restaurantId',
     param('restaurantId').isString().trim().notEmpty().withMessage('Restaurant ID must be string and is required'),
     getSearchedRestaurant
 )
