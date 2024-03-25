@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Restaurant, { MenuItemType } from '../models/restaurant';
+import Order from '../models/order';
 dotenv.config()
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string)
@@ -32,11 +33,20 @@ async function createCheckoutSession(req: Request, res: Response) {
             throw new Error('Restaurant not found')
         }
 
+        const newOrder = new Order({
+            restaurant: restaurant,
+            user: req.userId,
+            status: 'placed',
+            deliveryDetails: checkoutSessionRequest.deliveryDetails,
+            cartItems: checkoutSessionRequest.cartItems,
+            createdAt: new Date()
+        })
+
         const lineItems = createLineItems(checkoutSessionRequest, restaurant.menuItems)
 
         const session = await createSession(
             lineItems,
-            "Test_Order_Id",
+            newOrder._id.toString(),
             restaurant.deliveryPrice,
             restaurant._id.toString()
         )
@@ -47,6 +57,8 @@ async function createCheckoutSession(req: Request, res: Response) {
             })
         }
 
+        await newOrder.save()
+        
         return res.status(200).json({
             url: session.url
         })
