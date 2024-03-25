@@ -173,23 +173,42 @@ async function stripeWebhookHandler(req: Request, res: Response) {
 
     if (event.type === 'checkout.session.completed') {
         const order = await Order.findById(event.data.object.metadata?.orderId)
-        
+
         if (!order) {
             return res.status(404).json({
                 message: 'Order not found'
             })
         }
-        
+
         if (event.data.object.amount_total !== null) {
             order.totalAmount = event.data.object.amount_total / 100
         }
         order.status = 'paid'
-        
+
         await order.save()
+    }
+}
+
+async function getMyOrders(req: Request, res: Response) {
+    try {
+        const orders = await Order.find({
+            user: req.userId
+        })
+            .populate('restaurant')
+            .populate('user')
+
+        res.status(200).json(orders)
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: 'Error fetching orders'
+        })
     }
 }
 
 export {
     createCheckoutSession,
-    stripeWebhookHandler
+    stripeWebhookHandler,
+    getMyOrders
 }

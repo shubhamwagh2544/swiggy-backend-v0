@@ -1,6 +1,6 @@
 import express from "express";
 import { jwtCheck, jwtParse } from "../middlewares/auth";
-import { createCheckoutSession, stripeWebhookHandler } from "../controllers/ordercontroller";
+import { createCheckoutSession, getMyOrders, stripeWebhookHandler } from "../controllers/ordercontroller";
 const orderRouter = express.Router();
 
 orderRouter.post(
@@ -11,5 +11,7 @@ orderRouter.post(
 )
 
 orderRouter.post('/checkout/webhook', stripeWebhookHandler)
+
+orderRouter.get('/', jwtCheck, jwtParse, getMyOrders)
 
 export default orderRouter;
