@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Restaurant, { MenuItemType } from '../models/restaurant';
 import Order from '../models/order';
+import User from '../models/user';
 dotenv.config()
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string)
@@ -33,14 +34,40 @@ async function createCheckoutSession(req: Request, res: Response) {
             throw new Error('Restaurant not found')
         }
 
+        const user = await User.findById(req.userId)
+
         const newOrder = new Order({
             restaurant: restaurant,
-            user: req.userId,
+            user: {
+                _id: user?._id,
+                name: user?.name,
+                email: user?.email,
+            },
             status: 'placed',
-            deliveryDetails: checkoutSessionRequest.deliveryDetails,
-            cartItems: checkoutSessionRequest.cartItems,
+            deliveryDetails: {
+                email: user?.email,
+                name: checkoutSessionRequest.deliveryDetails.name,
+                addressLine: checkoutSessionRequest.deliveryDetails.addressLine,
+                city: checkoutSessionRequest.deliveryDetails.city,
+                country: checkoutSessionRequest.deliveryDetails.country
+            },
+            cartItems: [],
             createdAt: new Date()
         })
+
+        // Fetch the price for each menu item and include it in the cartItems array
+        for (const cartItem of checkoutSessionRequest.cartItems) {
+            const menuItem = restaurant.menuItems.find(item => item._id.toString() === cartItem.menuItemId)
+            if (!menuItem) {
+                throw new Error(`Menu item not found: ${cartItem.menuItemId}`)
+            }
+            newOrder.cartItems.push({
+                menuItemId: cartItem.menuItemId,
+                name: cartItem.name,
+                quantity: cartItem.quantity,
+                price: menuItem.price // Include the price here
+            })
+        }
 
         const lineItems = createLineItems(checkoutSessionRequest, restaurant.menuItems)
 
@@ -58,7 +85,7 @@ async function createCheckoutSession(req: Request, res: Response) {
         }
 
         await newOrder.save()
-        
+
         return res.status(200).json({
             url: session.url
         })
