@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { v2 as cloudinary } from 'cloudinary'
 import Restaurant from '../models/restaurant'
 import mongoose from 'mongoose'
+import Order from '../models/order'
 
 async function createRestaurant(req: Request, res: Response) {
     try {
@@ -58,7 +59,34 @@ async function getRestaurant(req: Request, res: Response) {
     }
 }
 
+async function getMyRestaurantOrders(req: Request, res: Response) {
+    try {
+        const restaurant = await Restaurant.findOne({
+            user: req.userId
+        })
+        if (!restaurant) {
+            return res.status(404).json({
+                message: "Restaurant does not exists"
+            })
+        }
+        const orders = await Order.find({
+            restaurant: restaurant._id
+        })
+            .populate('restaurant')
+            .populate('user')
+
+        return res.status(200).json(orders)
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: 'Error fetching restaurant orders'
+        })
+    }
+}
+
 export {
     createRestaurant,
-    getRestaurant
+    getRestaurant,
+    getMyRestaurantOrders
 }
