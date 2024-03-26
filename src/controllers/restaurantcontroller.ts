@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import e, { Request, Response } from 'express'
 import { v2 as cloudinary } from 'cloudinary'
 import Restaurant from '../models/restaurant'
 import mongoose from 'mongoose'
@@ -85,8 +85,41 @@ async function getMyRestaurantOrders(req: Request, res: Response) {
     }
 }
 
+async function updateOrderStatus(req: Request, res: Response) {
+    try {
+        const { orderId } = req.params
+        const { status } = req.body
+
+        const order = await Order.findById(orderId)
+        if (!order) {
+            return res.status(404).json({
+                message: 'Order not found'
+            })
+        }
+
+        const restaurant = await Restaurant.findById(order.restaurant)
+        if (restaurant?.user?._id.toString() !== req.userId) {
+            return res.status(403).json({
+                message: 'Forbidden'
+            })
+        }
+
+        order.status = status
+        await order.save()
+
+        return res.status(200).json(order)
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: 'Error updating order status'
+        })
+    }
+}
+
 export {
     createRestaurant,
     getRestaurant,
-    getMyRestaurantOrders
+    getMyRestaurantOrders,
+    updateOrderStatus
 }
